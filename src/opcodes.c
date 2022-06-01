@@ -7,7 +7,7 @@
 // Function Prototypes
 
 int ADC(struct cpu* CPU, admod add_mode);
-int BRK(struct cpu* CPU, admod add_mode);
+int BRK(struct cpu* CPU);
 int LDX(struct cpu* CPU, admod add_mode);
 int LDY(struct cpu* CPU, admod add_mode);
 int LDA(struct cpu* CPU, admod add_mode);
@@ -50,7 +50,7 @@ int run(uint8_t opcode, struct cpu* CPU) {
         case 0x71:
             return ADC(CPU, IndirectY);
         case 0x00:
-            return BRK(CPU, Implied);
+            return BRK(CPU);
         case 0xA2:
             return LDX(CPU, Immediate);
         case 0xA6:
@@ -186,7 +186,7 @@ int ADC(struct cpu* CPU, admod add_mode){
 }
 
 /* Force Break */
-int BRK(struct cpu* CPU, admod add_mode) {
+int BRK(struct cpu* CPU) {
     // Push "PC + 2", PC at BRK instruction
     // Skipping one slot for break mark -> Reason for breaking 
     // Also push Process Status Register
