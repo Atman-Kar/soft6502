@@ -27,4 +27,4 @@ soft6501
 
 ```
 
-[NESDoc.pdf](NESDoc.pdf) is the source of inspiration for this project. 
+[NESDoc.pdf](https://www.nesdev.com/NESDoc.pdf) is the source of inspiration for this project. 
