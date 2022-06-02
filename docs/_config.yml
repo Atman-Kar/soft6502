@@ -3,7 +3,7 @@ remote_theme: just-the-docs/just-the-docs
 exclude: ["node_modules/", "*.gemspec", "*.gem", "Gemfile","README.md", "Gemfile.lock", "package.json", "package-lock.json",  "script/", "LICENSE.txt", "lib/", "bin/", "README.md", "Rakefile"]
 
 aux_links:
-  "soft6502":
+  "A 6502 Emulator":
     - "https://github.com/Atman-Kar/soft6502"
 
 title: A 6502 Emulator
