@@ -24,6 +24,8 @@ The memory address ranges from $\text{0x0000}$ to $\text{0xFFFF}$. Each memory l
 
 In our program, we define a struct CPU with these components as shown below. This structure will be continuosly updated everytime the CPU state changes on execution of an instruction.
 
+<div class="code-example" markdown="1">
+
 ```C
 
 /* Definition in src/cpu.h */
@@ -43,6 +45,7 @@ struct cpu
 
 } CPU;
 ```
+</div>
 
 In the following chapters, we will see how to initialize and modify CPU states to execute a given program.
 
