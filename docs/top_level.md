@@ -22,7 +22,7 @@ The 6502 has the following registers:
 
 The memory address ranges from 0x0000 to 0xFFFF. Each memory location can accomodate a single byte of data. 
 
-In our program, we define a struct CPU with these components as shown below. This structure will be continuosly updated everytime the CPU state changes on execution of an instruction.
+In our program, we define a struct CPU with these components as shown below. This structure will be continuously updated everytime the CPU state changes on execution of an instruction.
 
 <div class="code-example" markdown="1">
 
