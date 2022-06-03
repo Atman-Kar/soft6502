@@ -26,8 +26,7 @@ In our program, we define a struct CPU with these components as shown below. Thi
 
 <div class="code-example" markdown="1">
 
-```C
-
+```cpp
 /* Definition in src/cpu.h */
 
 #define MEM_SIZE 0xFFFF; // Memory Size
