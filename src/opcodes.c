@@ -28,6 +28,13 @@ int CLI();
 int NOP();
 int CLV();
 int HLT();
+int CMP(struct cpu* CPU, admod add_mode);
+int CPX(struct cpu* CPU, admod add_mode);
+int CPY(struct cpu* CPU, admod add_mode);
+int DEC(struct cpu* CPU, admod add_mode);
+int DEX(struct cpu* CPU);
+int DEY(struct cpu* CPU);
+int EOR(struct cpu* CPU, admod add_mode);
 
 /* Huuuuuge opcode switch case lol */
 int run(uint8_t opcode, struct cpu* CPU) {
@@ -143,6 +150,62 @@ int run(uint8_t opcode, struct cpu* CPU) {
             return CLV();
         case 0x02:
             return HLT();
+        case 0xC9:
+            return CMP(CPU, Immediate);
+        case 0xC5:
+            return CMP(CPU, ZeroPage);
+        case 0xD5:
+            return CMP(CPU, ZeroPageX);
+        case 0xCD:
+            return CMP(CPU, Absolute);
+        case 0xDD:
+            return CMP(CPU, AbsoluteX);
+        case 0xD9:
+            return CMP(CPU, AbsoluteY);
+        case 0xC1:
+            return CMP(CPU, IndirectX);
+        case 0xD1:
+            return CMP(CPU, IndirectY);
+        case 0xE0:
+            return CPX(CPU, Immediate);
+        case 0xE4:
+            return CPX(CPU, ZeroPage);
+        case 0xEC:
+            return CPX(CPU, Absolute);
+        case 0xC0:
+            return CPY(CPU, Immediate);
+        case 0xC4:
+            return CPY(CPU, ZeroPage);
+        case 0xCC:
+            return CPY(CPU, Absolute);
+        case 0xC6:
+            return DEC(CPU, ZeroPage);
+        case 0xD6:
+            return DEC(CPU, ZeroPageX);
+        case 0xCE:
+            return DEC(CPU, Absolute);
+        case 0xDE:
+            return DEC(CPU, AbsoluteX);
+        case 0xCA:
+            return DEX(CPU);
+        case 0x88:
+            return DEY(CPU);
+        case 0x49:
+            return EOR(CPU, Immediate);
+        case 0x45:
+            return EOR(CPU, ZeroPage);
+        case 0x55:
+            return EOR(CPU, ZeroPageX);
+        case 0x4D:
+            return EOR(CPU, Absolute);
+        case 0x5D:
+            return EOR(CPU, AbsoluteX);
+        case 0x59:
+            return EOR(CPU, AbsoluteY);
+        case 0x41:
+            return EOR(CPU, IndirectX);
+        case 0x51:
+            return EOR(CPU, IndirectY);
 
     };
 
@@ -176,10 +239,12 @@ int ADC(struct cpu* CPU, admod add_mode){
 
     if(CPU->A == 0) {
         set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
     }
 
     if(CPU->A & (1 << NEGATIVE_FLAG)) {
         set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
     }
 
     return EXECUTION;
@@ -222,10 +287,12 @@ int LDX(struct cpu* CPU, admod add_mode) {
 
     if(CPU->X == 0) {
         set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
     }
 
     if(CPU->X & (1 << NEGATIVE_FLAG)) {
         set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
     }
 
     return EXECUTION;
@@ -245,10 +312,12 @@ int LDY(struct cpu* CPU, admod add_mode) {
 
     if(CPU->Y == 0) {
         set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
     }
 
     if(CPU->Y & (1 << NEGATIVE_FLAG)) {
         set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
     }
 
     return EXECUTION;
@@ -268,10 +337,12 @@ int LDA(struct cpu* CPU, admod add_mode) {
 
     if(CPU->A == 0) {
         set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
     }
 
     if(CPU->A & (1 << NEGATIVE_FLAG)) {
         set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
     }
 
     return EXECUTION;
@@ -291,10 +362,12 @@ int AND(struct cpu* CPU, admod add_mode) {
 
     if(CPU->A == 0) {
         set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
     }
 
     if(CPU->A & (1 << NEGATIVE_FLAG)) {
         set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
     }
 
     return EXECUTION;
@@ -319,10 +392,12 @@ int ASL(struct cpu* CPU, admod add_mode) {
 
         if(CPU->A == 0) {
             set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+            reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
         }
 
         if(CPU->A & (1 << NEGATIVE_FLAG)) {
             set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+            reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
         }
 
         return EXECUTION;
@@ -338,10 +413,12 @@ int ASL(struct cpu* CPU, admod add_mode) {
 
     if(CPU->memory[mem_addr] == 0) {
         set_process_status_reg(ZERO_FLAG); // ZERO FLAG
+        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
     }
 
     if(CPU->memory[mem_addr] & (1 << NEGATIVE_FLAG)) {
         set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
+        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
     }
 
     return EXECUTION;
@@ -351,7 +428,7 @@ int ASL(struct cpu* CPU, admod add_mode) {
 int BCC(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand 
     if (!process_status_val(CARRY_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -363,7 +440,7 @@ int BCC(struct cpu* CPU){
 int BCS(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand 
     if (process_status_val(CARRY_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -375,7 +452,7 @@ int BCS(struct cpu* CPU){
 int BEQ(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (process_status_val(ZERO_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -385,6 +462,13 @@ int BEQ(struct cpu* CPU){
 
 /* Test bits in memory with accumulator */
 int BIT(struct cpu* CPU, admod add_mode){
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    *   Overflow Flag 
+    */ 
+
     uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
     if(((CPU->A) & (operand)) == 0x00) {
         set_process_status_reg(ZERO_FLAG);
@@ -409,7 +493,7 @@ int BIT(struct cpu* CPU, admod add_mode){
 int BMI(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (process_status_val(NEGATIVE_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -421,7 +505,7 @@ int BMI(struct cpu* CPU){
 int BNE(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (!process_status_val(ZERO_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -433,7 +517,7 @@ int BNE(struct cpu* CPU){
 int BPL(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (!process_status_val(NEGATIVE_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -445,7 +529,7 @@ int BPL(struct cpu* CPU){
 int BVC(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (!process_status_val(OVERFLOW_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -457,7 +541,7 @@ int BVC(struct cpu* CPU){
 int BVS(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (process_status_val(OVERFLOW_FLAG)) {
-        CPU->PC = CPU->PC + operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -497,4 +581,188 @@ int CLV() {
 /* Freeze the CPU */
 int HLT() {
     return EXIT_PROG;
+}
+
+/* Compare instruction */
+int CMP(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    *   Carry Flag 
+    */ 
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
+    
+    if(CPU->A > operand){
+        reset_process_status_reg(ZERO_FLAG);
+        reset_process_status_reg(CARRY_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    } else if (CPU->A == operand) {
+        set_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(CARRY_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    } else {
+        reset_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(CARRY_FLAG);
+        set_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    return EXECUTION;
+}
+
+/* Compare with X register */
+int CPX(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    *   Carry Flag 
+    */ 
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
+    
+    if(CPU->X > operand){
+        reset_process_status_reg(ZERO_FLAG);
+        reset_process_status_reg(CARRY_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    } else if (CPU->X == operand) {
+        set_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(CARRY_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    } else {
+        reset_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(CARRY_FLAG);
+        set_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    return EXECUTION;
+}
+
+/* Compare with Y register */
+int CPY(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    *   Carry Flag 
+    */ 
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
+    
+    if(CPU->Y > operand){
+        reset_process_status_reg(ZERO_FLAG);
+        reset_process_status_reg(CARRY_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    } else if (CPU->Y == operand) {
+        set_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(CARRY_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    } else {
+        reset_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(CARRY_FLAG);
+        set_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    return EXECUTION;
+}
+
+/* Decrement Memory by 1 */
+int DEC(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
+
+    if (operand == 1) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+    }
+
+    if (operand == 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+    }
+
+    CPU->memory[operand_address_resolve(add_mode)] = operand - 1;
+
+    return EXECUTION;
+}
+
+/* Decrement X Register */
+int DEX(struct cpu* CPU) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+    uint8_t operand = CPU->X;
+
+    if (operand == 1) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+    }
+
+    if (operand == 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+    }
+
+    CPU->X = operand - 1;
+
+    return EXECUTION;
+}
+
+/* Decrement Y Register */
+int DEY(struct cpu* CPU) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+    uint8_t operand = CPU->Y;
+
+    if (operand == 1) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+    }
+
+    if (operand == 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+    }
+
+    CPU->Y = operand - 1;
+
+    return EXECUTION;
+}
+
+/* Exculive OR Memory with Accumulator */
+int EOR(struct cpu* CPU, admod add_mod) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mod)];
+
+    CPU->A = CPU->A ^ operand;
+
+    if (CPU->A == 0) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+    }
+
+    if ((int8_t) CPU->A < 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+    }
+
+    return EXECUTION;
 }

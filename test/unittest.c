@@ -287,6 +287,26 @@ void test_clv(struct cpu* CPU) {
     ASSERT_EQUAL(expected, CPU->P);    
 }
 
+void test_cmp_1(struct cpu* CPU) {
+    reset_cpu();
+    uint8_t expected = 0b00000011;
+    uint8_t program[] = {0xA9, 0x29, 0xC9, 0x29, 0x02};
+    size_t program_len = sizeof(program) / sizeof(program[0]);    
+    load_program(program, program_len);
+    execute(); 
+    ASSERT_EQUAL(expected, CPU->P);      
+}
+
+void test_cmp_2(struct cpu* CPU) {
+    reset_cpu();
+    uint8_t expected = 0b10000001; 
+    uint8_t program[] = {0xA9, 0x29, 0xC9, 0x49, 0x02};
+    size_t program_len = sizeof(program) / sizeof(program[0]);    
+    load_program(program, program_len);
+    execute(); 
+    ASSERT_EQUAL(expected, CPU->P);      
+}
+
 int main() {
 
     /* Append function pointer to this list */
@@ -313,7 +333,9 @@ int main() {
                                   ,test_bvs                             \
                                   ,test_clc                             \
                                   ,test_cld                             \
-                                  ,test_clv
+                                  ,test_clv                             \
+                                  ,test_cmp_1                           \
+                                  ,test_cmp_2
                                   };
     size_t len = sizeof(utest_ptr)/sizeof(utest_ptr[0]);
     for(size_t i = 0; i < len; i ++) {
