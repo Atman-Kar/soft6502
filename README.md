@@ -77,9 +77,9 @@ P  : 0
 ###################################
 ```
 
-## Running Unit Tests
+## Running Tests
 
-To run the Unit Tests:
+To run the test script:
 
 ```bash
 $ make utest

@@ -10,7 +10,7 @@ The 6502 is a fairly simple processor. It consists of a bunch of IO pins, a hand
 ## Regs and Mem
 
 
-![Top Level 6502](top_level.png)
+![Top Level 6502](images/top_level.png)
 
 The 6502 has the following registers:
 - Stack Pointer (SP) : 8 bits 
@@ -18,7 +18,7 @@ The 6502 has the following registers:
 - Register X (X) : 8 bits
 - Register Y (Y) : 8 bits
 - Process Status Register (P) : 8 bits
-- Process Counter (PC) : 16 bits
+- Program Counter (PC) : 16 bits
 
 The memory address ranges from 0x0000 to 0xFFFF. Each memory location can accomodate a single byte of data. 
 
