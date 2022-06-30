@@ -46,6 +46,23 @@ int PHA(struct cpu* CPU);
 int PHP(struct cpu* CPU);
 int PLA(struct cpu* CPU);
 int PLP(struct cpu* CPU);
+int ROL(struct cpu* CPU, admod add_mode);
+int ROR(struct cpu* CPU, admod add_mode);
+int RTI(struct cpu* CPU);
+int RTS(struct cpu* CPU);
+
+
+static inline void zero_and_negative_flag(uint8_t val) {
+    if(val == 0) {
+        set_process_status_reg(ZERO_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    if((int8_t) val < 0) {
+        reset_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(NEGATIVE_FLAG);        
+    }    
+}
 
 /* Huuuuuge opcode switch case lol */
 int run(uint8_t opcode, struct cpu* CPU) {
@@ -269,6 +286,30 @@ int run(uint8_t opcode, struct cpu* CPU) {
             return PLA(CPU);
         case 0x28:
             return PLP(CPU);
+        case 0x2A:
+            return ROL(CPU, Accumulator);
+        case 0x26:
+            return ROL(CPU, ZeroPage);
+        case 0x36:
+            return ROL(CPU, ZeroPageX);
+        case 0x2E:
+            return ROL(CPU, Absolute);
+        case 0x3E:
+            return ROL(CPU, AbsoluteX);
+        case 0x6A:
+            return ROR(CPU, Accumulator);
+        case 0x66:
+            return ROR(CPU, ZeroPage);
+        case 0x76:
+            return ROR(CPU, ZeroPageX);
+        case 0x6e:
+            return ROR(CPU, Absolute);
+        case 0x7E:
+            return ROR(CPU, AbsoluteX);
+        case 0x40:
+            return RTI(CPU);
+        case 0x60:
+            return RTS(CPU);
     };
 
     return ILLEGAL_INSTRUCTION;
@@ -299,15 +340,7 @@ int ADC(struct cpu* CPU, admod add_mode){
         reset_process_status_reg(OVERFLOW_FLAG); // OVERFLOW FLAG
     }
 
-    if(CPU->A == 0) {
-        set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-    }
-
-    if(CPU->A & (1 << NEGATIVE_FLAG)) {
-        set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-    }
+    zero_and_negative_flag(CPU->A);
 
     return EXECUTION;
 }
@@ -347,15 +380,7 @@ int LDX(struct cpu* CPU, admod add_mode) {
 
     CPU->X = operand;
 
-    if(CPU->X == 0) {
-        set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-    }
-
-    if(CPU->X & (1 << NEGATIVE_FLAG)) {
-        set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-    }
+    zero_and_negative_flag(CPU->X);
 
     return EXECUTION;
 }
@@ -372,15 +397,7 @@ int LDY(struct cpu* CPU, admod add_mode) {
 
     CPU->Y = operand;
 
-    if(CPU->Y == 0) {
-        set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-    }
-
-    if(CPU->Y & (1 << NEGATIVE_FLAG)) {
-        set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-    }
+    zero_and_negative_flag(CPU->Y);
 
     return EXECUTION;
 }
@@ -397,15 +414,7 @@ int LDA(struct cpu* CPU, admod add_mode) {
 
     CPU->A = operand;
 
-    if(CPU->A == 0) {
-        set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-    }
-
-    if(CPU->A & (1 << NEGATIVE_FLAG)) {
-        set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-    }
+    zero_and_negative_flag(CPU->A);
 
     return EXECUTION;
 }
@@ -422,15 +431,7 @@ int AND(struct cpu* CPU, admod add_mode) {
 
     CPU->A = (CPU->A) & operand;
 
-    if(CPU->A == 0) {
-        set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-    }
-
-    if(CPU->A & (1 << NEGATIVE_FLAG)) {
-        set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-    }
+    zero_and_negative_flag(CPU->A);
 
     return EXECUTION;
 }
@@ -452,15 +453,7 @@ int ASL(struct cpu* CPU, admod add_mode) {
 
         CPU->A = (CPU->A) << 1;
 
-        if(CPU->A == 0) {
-            set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-            reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        }
-
-        if(CPU->A & (1 << NEGATIVE_FLAG)) {
-            set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-            reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        }
+        zero_and_negative_flag(CPU->A);
 
         return EXECUTION;
     }
@@ -473,15 +466,7 @@ int ASL(struct cpu* CPU, admod add_mode) {
 
     CPU->memory[mem_addr] = (CPU->memory[mem_addr]) << 1;
 
-    if(CPU->memory[mem_addr] == 0) {
-        set_process_status_reg(ZERO_FLAG); // ZERO FLAG
-        reset_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-    }
-
-    if(CPU->memory[mem_addr] & (1 << NEGATIVE_FLAG)) {
-        set_process_status_reg(NEGATIVE_FLAG); // NEGATIVE FLAG
-        reset_process_status_reg(ZERO_FLAG); // ZERO FLAG
-    }
+    zero_and_negative_flag(CPU->memory[mem_addr]);
 
     return EXECUTION;
 }
@@ -836,18 +821,10 @@ int INC(struct cpu* CPU, admod add_mode) {
     *   Zero Flag
     *   Negative Flag
     */ 
+   uint16_t addr = operand_address_resolve(add_mode);
+   (CPU->memory[addr])++;
 
-   (CPU->memory[operand_address_resolve(add_mode)])++;
-
-   if(CPU->memory[operand_address_resolve(add_mode)] == 0) {
-        reset_process_status_reg(NEGATIVE_FLAG);
-        set_process_status_reg(ZERO_FLAG);
-   }
-
-   if((int8_t)(CPU->memory[operand_address_resolve(add_mode)]) < 0) {
-        set_process_status_reg(NEGATIVE_FLAG);
-        reset_process_status_reg(ZERO_FLAG);
-   }
+   zero_and_negative_flag(CPU->memory[addr]);
 
    return EXECUTION;
 }
@@ -862,15 +839,7 @@ int INX(struct cpu* CPU) {
 
    (CPU->X)++;
 
-   if(CPU->X == 0) {
-        reset_process_status_reg(NEGATIVE_FLAG);
-        set_process_status_reg(ZERO_FLAG);
-   }
-
-   if((int8_t)(CPU->X) < 0) {
-        set_process_status_reg(NEGATIVE_FLAG);
-        reset_process_status_reg(ZERO_FLAG);
-   }
+   zero_and_negative_flag(CPU->X);
 
    return EXECUTION;
 }
@@ -885,15 +854,7 @@ int INY(struct cpu* CPU) {
 
    (CPU->Y)++;
 
-   if(CPU->Y == 0) {
-        reset_process_status_reg(NEGATIVE_FLAG);
-        set_process_status_reg(ZERO_FLAG);
-   }
-
-   if((int8_t)(CPU->Y) < 0) {
-        set_process_status_reg(NEGATIVE_FLAG);
-        reset_process_status_reg(ZERO_FLAG);
-   }
+   zero_and_negative_flag(CPU->Y);
 
    return EXECUTION;
 }
@@ -982,15 +943,7 @@ int ORA(struct cpu* CPU, admod add_mode) {
 
     CPU->A = CPU->A | operand;
 
-    if(CPU->A == 0) {
-        set_process_status_reg(ZERO_FLAG);
-        reset_process_status_reg(NEGATIVE_FLAG);
-    }
-
-    if((int8_t) CPU->A < 0) {
-        reset_process_status_reg(ZERO_FLAG);
-        set_process_status_reg(NEGATIVE_FLAG);
-    }
+    zero_and_negative_flag(CPU->A);
 
     return EXECUTION;
 }
@@ -1033,15 +986,7 @@ int PLA(struct cpu* CPU) {
 
     CPU->A = pull();
 
-    if(CPU->A == 0) {
-        set_process_status_reg(ZERO_FLAG);
-        reset_process_status_reg(NEGATIVE_FLAG);
-    }
-
-    if((int8_t) CPU->A < 0) {
-        reset_process_status_reg(ZERO_FLAG);
-        set_process_status_reg(NEGATIVE_FLAG);        
-    }
+    zero_and_negative_flag(CPU->A);
 
     return EXECUTION;
 }
@@ -1054,4 +999,102 @@ int PLP(struct cpu* CPU) {
     return EXECUTION;
 }
 
+/* Rotate one bit left (Memory or accumulator) */
+int ROL(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag 
+    *   Carry Flag 
+    */ 
 
+    uint8_t C = process_status_val(CARRY_FLAG);
+
+    if(add_mode == Accumulator) {
+        if((int8_t) CPU->A < 0) {
+            set_process_status_reg(CARRY_FLAG);
+        } else {
+            reset_process_status_reg(CARRY_FLAG);
+        }
+
+        CPU->A = CPU->A << 1;
+        CPU->A = CPU->A + C;
+
+        zero_and_negative_flag(CPU->A);
+
+        return EXECUTION;
+    }
+
+    uint16_t addr = operand_address_resolve(add_mode);
+
+    if((int8_t) CPU->memory[addr] < 0) {
+        set_process_status_reg(CARRY_FLAG);
+    } else {
+        reset_process_status_reg(CARRY_FLAG);
+    }
+
+    CPU->memory[addr] = CPU->memory[addr] << 1;
+    CPU->memory[addr] = CPU->memory[addr] + C;
+
+    zero_and_negative_flag(CPU->memory[addr]);
+    
+    return EXECUTION;
+}
+
+/* Rotate one bit right (Memory or accumulator) */
+int ROR(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag 
+    *   Carry Flag 
+    */ 
+
+    uint8_t C = process_status_val(CARRY_FLAG);
+
+    if(add_mode == Accumulator) {
+        if(CPU->A % 2 == 1) {
+            set_process_status_reg(CARRY_FLAG);
+        } else {
+            reset_process_status_reg(CARRY_FLAG);
+        }
+
+        CPU->A = CPU->A >> 1;
+        CPU->A = CPU->A + (C << 7);
+
+        zero_and_negative_flag(CPU->A);
+
+        return EXECUTION;
+    }
+
+    uint16_t addr = operand_address_resolve(add_mode);
+
+    if(CPU->memory[addr] % 2 == 1) {
+        set_process_status_reg(CARRY_FLAG);
+    } else {
+        reset_process_status_reg(CARRY_FLAG);
+    }
+
+    CPU->memory[addr] = CPU->memory[addr] >> 1;
+    CPU->memory[addr] = CPU->memory[addr] + (C << 7);
+
+    zero_and_negative_flag(CPU->memory[addr]);
+    
+    return EXECUTION;
+}
+
+/* Return from interrupt */
+int RTI(struct cpu* CPU) {
+
+    CPU->P = pull();
+    CPU->PC = pull_u16();
+
+    return EXECUTION;
+}
+
+/* return from subroutine */
+int RTS(struct cpu* CPU) {
+
+    CPU->PC = pull_u16();
+    return EXECUTION;
+}
