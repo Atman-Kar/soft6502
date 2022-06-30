@@ -46,6 +46,7 @@ typedef enum addressing_modes {
     IndirectY,
     Accumulator,
     Implied,
+    Indirect
 } admod;
 
 
@@ -64,5 +65,8 @@ int process_status_val(PS_FLAG FLAG);
 void reset_cpu(void);
 void push(uint8_t stack_data);
 void push_u16(uint16_t stack_data);
+uint8_t pull();
+uint16_t pull_u16();
+
 
 #endif // _CPU_H

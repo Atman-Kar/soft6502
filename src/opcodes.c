@@ -35,6 +35,17 @@ int DEC(struct cpu* CPU, admod add_mode);
 int DEX(struct cpu* CPU);
 int DEY(struct cpu* CPU);
 int EOR(struct cpu* CPU, admod add_mode);
+int INC(struct cpu* CPU, admod add_mode);
+int INX(struct cpu* CPU);
+int INY(struct cpu* CPU);
+int JMP(struct cpu* CPU, admod add_mode);
+int JSR(struct cpu* CPU, admod add_mode);
+int LSR(struct cpu* CPU, admod add_mode);
+int ORA(struct cpu* CPU, admod add_mode);
+int PHA(struct cpu* CPU);
+int PHP(struct cpu* CPU);
+int PLA(struct cpu* CPU);
+int PLP(struct cpu* CPU);
 
 /* Huuuuuge opcode switch case lol */
 int run(uint8_t opcode, struct cpu* CPU) {
@@ -206,7 +217,58 @@ int run(uint8_t opcode, struct cpu* CPU) {
             return EOR(CPU, IndirectX);
         case 0x51:
             return EOR(CPU, IndirectY);
-
+        case 0xE6:
+            return INC(CPU, ZeroPage);
+        case 0xF6:
+            return INC(CPU, ZeroPageX);
+        case 0xEE:
+            return INC(CPU, Absolute);
+        case 0xFE:
+            return INC(CPU, AbsoluteX);
+        case 0xE8:
+            return INX(CPU);
+        case 0xC8:
+            return INY(CPU);
+        case 0x4C:
+            return JMP(CPU, Absolute);
+        case 0x6C:
+            return JMP(CPU, Indirect);
+        case 0x20:
+            return JSR(CPU, Absolute);
+        case 0x4A:
+            return LSR(CPU, Accumulator);
+        case 0x46:
+            return LSR(CPU, ZeroPage);
+        case 0x56:
+            return LSR(CPU, ZeroPageX);
+        case 0x4E:
+            return LSR(CPU, Absolute);
+        case 0x5E:
+            return LSR(CPU, AbsoluteX);
+        case 0x09:
+            return ORA(CPU, Immediate);
+        case 0x05:
+            return ORA(CPU, ZeroPage);
+        case 0x15:
+            return ORA(CPU, ZeroPageX);
+        case 0x0D:
+            return ORA(CPU, Absolute);
+        case 0x1D:
+            return ORA(CPU, AbsoluteX);
+        case 0x19:
+            return ORA(CPU, AbsoluteY);
+        case 0x01:
+            return ORA(CPU, IndirectX);
+        case 0x11:
+            return ORA(CPU, IndirectY);
+        case 0x48:
+            return PHA(CPU);
+        case 0x08:
+            return PHP(CPU);
+        case 0x68:
+            return PLA(CPU);
+        case 0x28:
+            return PLP(CPU);
     };
 
     return ILLEGAL_INSTRUCTION;
@@ -766,3 +828,230 @@ int EOR(struct cpu* CPU, admod add_mod) {
 
     return EXECUTION;
 }
+
+/* Increment the value at memory by one */
+int INC(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+   (CPU->memory[operand_address_resolve(add_mode)])++;
+
+   if(CPU->memory[operand_address_resolve(add_mode)] == 0) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+   }
+
+   if((int8_t)(CPU->memory[operand_address_resolve(add_mode)]) < 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+   }
+
+   return EXECUTION;
+}
+
+/* Increment the X reg by 1 */
+int INX(struct cpu* CPU) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+   (CPU->X)++;
+
+   if(CPU->X == 0) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+   }
+
+   if((int8_t)(CPU->X) < 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+   }
+
+   return EXECUTION;
+}
+
+/* Increment the Y reg by 1 */
+int INY(struct cpu* CPU) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag
+    */ 
+
+   (CPU->Y)++;
+
+   if(CPU->Y == 0) {
+        reset_process_status_reg(NEGATIVE_FLAG);
+        set_process_status_reg(ZERO_FLAG);
+   }
+
+   if((int8_t)(CPU->Y) < 0) {
+        set_process_status_reg(NEGATIVE_FLAG);
+        reset_process_status_reg(ZERO_FLAG);
+   }
+
+   return EXECUTION;
+}
+
+/* Jump instruction */
+int JMP(struct cpu* CPU, admod add_mode) {
+    /* 
+    * No flags modified for this method
+    */
+
+    uint16_t jmp_address  = operand_address_resolve(add_mode);
+
+    /* Make the jump */
+    CPU->PC = jmp_address;
+
+    return EXECUTION;
+}
+
+/* Jump Subroutine */
+int JSR(struct cpu* CPU, admod add_mode) {
+    /* 
+    * No flags modified for this method
+    */
+
+
+    uint16_t jmp_address = operand_address_resolve(add_mode);
+
+    /* push current PC to stack */
+    push_u16(CPU->PC);
+
+    /* Make the jump */
+    CPU->PC = jmp_address;
+
+    return EXECUTION;
+}
+
+/* Shift one bit right (Memory or accumulator) */
+int LSR(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag = 0 (always)
+    *   Carry Flag
+    */ 
+
+    reset_process_status_reg(NEGATIVE_FLAG);
+    if(add_mode == Accumulator) {
+        if(CPU->A & 0x1) {
+            set_process_status_reg(CARRY_FLAG);
+        } else {
+            reset_process_status_reg(CARRY_FLAG);
+        }
+
+        if(CPU->A == 0) set_process_status_reg(ZERO_FLAG);
+
+        CPU->A = (CPU->A) >> 1;
+
+        return EXECUTION;
+    }
+
+    uint16_t address = operand_address_resolve(add_mode);
+
+    if(CPU->memory[address] & 0x1) {
+        set_process_status_reg(CARRY_FLAG);
+    } else {
+        reset_process_status_reg(CARRY_FLAG);
+    }
+
+    if(CPU->memory[address] == 0) set_process_status_reg(ZERO_FLAG);
+
+    CPU->memory[address] = (CPU->memory[address]) >> 1;
+
+    return EXECUTION;
+}
+
+
+/* OR memory with accumulator */
+int ORA(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag 
+    */ 
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
+
+    CPU->A = CPU->A | operand;
+
+    if(CPU->A == 0) {
+        set_process_status_reg(ZERO_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    if((int8_t) CPU->A < 0) {
+        reset_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    return EXECUTION;
+}
+
+/* Push Accumulator to the stack */
+int PHA(struct cpu* CPU) {
+    /* 
+    * No flags modified for this method
+    */
+
+    push(CPU->A);
+    return EXECUTION;
+}
+
+/* Push the process flag to stack */
+int PHP(struct cpu* CPU) {
+    /* 
+    * No flags modified for this method
+    */
+
+    /* Too lazy to do bit stuff lol */
+
+    uint8_t old_flag = CPU->P;
+    set_process_status_reg(UNUSED_FLAG);
+    set_process_status_reg(BREAK_FLAG);
+
+    push(CPU->P);
+
+    CPU->P = old_flag;
+    return EXECUTION;
+}
+
+/* Pull the accumulator from stack */
+int PLA(struct cpu* CPU) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag 
+    */ 
+
+    CPU->A = pull();
+
+    if(CPU->A == 0) {
+        set_process_status_reg(ZERO_FLAG);
+        reset_process_status_reg(NEGATIVE_FLAG);
+    }
+
+    if((int8_t) CPU->A < 0) {
+        reset_process_status_reg(ZERO_FLAG);
+        set_process_status_reg(NEGATIVE_FLAG);        
+    }
+
+    return EXECUTION;
+}
+
+/* Pull process status flag from stack */
+int PLP(struct cpu* CPU) {
+
+    CPU->P = pull();
+
+    return EXECUTION;
+}
+
+

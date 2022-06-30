@@ -67,13 +67,13 @@ void mem_write(uint16_t mem_addr, uint8_t data) {
     CPU.memory[mem_addr] = data;
 }
 
-/* Push to stack */
+/* Push byte to stack */
 void push(uint8_t stack_data) {
     CPU.memory[CPU.SP] = stack_data;
     (CPU.SP)--;
 }
 
-/* Push to stack */
+/* Push word to stack */
 void push_u16(uint16_t stack_data) {
     uint8_t lo = (uint8_t) (stack_data & 0x00FF);
     uint8_t hi = (uint8_t) ((stack_data & 0xFF00) >> 8);
@@ -82,6 +82,22 @@ void push_u16(uint16_t stack_data) {
     CPU.memory[CPU.SP] = lo;
     (CPU.SP)--;
 }
+
+/* pull byte from stack */
+uint8_t pull() {
+    (CPU.SP)++;
+    return CPU.memory[CPU.SP];
+}
+
+/* pull word from stack */
+uint16_t pull_u16() {
+    (CPU.SP)++;
+    uint8_t val_hi = CPU.memory[CPU.SP];
+    (CPU.SP)++;
+    uint8_t val_lo = CPU.memory[CPU.SP];
+    return ((val_hi << 8) | val_lo);
+}
+
 
 /* Load the program into memory at 
 *  location MEM_PROG_BEGIN 
@@ -167,6 +183,12 @@ uint16_t operand_address_resolve(admod mode){
             ptr  = (uint16_t) (mem_read(CPU.PC) + CPU.X);
             mem_addr = mem_read_u16(ptr);
             (CPU.PC)++;
+            break;
+        
+        case Indirect:
+            ptr  = mem_read_u16(CPU.PC);
+            mem_addr = mem_read_u16(ptr);
+            CPU.PC = CPU.PC + 2;
             break;
         
         case Accumulator:
