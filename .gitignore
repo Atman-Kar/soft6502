@@ -3,3 +3,5 @@ ut.sh
 *.drawio
 *.bkp
 rough-work/
+parse_snake.py
+log

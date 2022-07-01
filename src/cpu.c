@@ -92,9 +92,9 @@ uint8_t pull() {
 /* pull word from stack */
 uint16_t pull_u16() {
     (CPU.SP)++;
-    uint8_t val_hi = CPU.memory[CPU.SP];
-    (CPU.SP)++;
     uint8_t val_lo = CPU.memory[CPU.SP];
+    (CPU.SP)++;
+    uint8_t val_hi = CPU.memory[CPU.SP];
     return ((val_hi << 8) | val_lo);
 }
 
@@ -230,8 +230,9 @@ void execute(void){
     uint8_t opcode;
     while(1) {
         opcode = mem_read(CPU.PC);
-        (CPU.PC)++; // Increment PC
-         
+        display_cpu_regs();
+        (CPU.PC)++; // Increment PC        
+        printf("Running Opcode : 0x%x\n", opcode);
         /* Execute the opcode switch statements here */
         FLAG = run(opcode, &CPU);
         switch (FLAG) {
@@ -242,6 +243,7 @@ void execute(void){
                 return;
             
             case ILLEGAL_INSTRUCTION:
+                printf("FATAL: ILLEGAL INSTRUCTION\n");
                 return;
         }
     }   

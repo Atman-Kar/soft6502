@@ -5,7 +5,7 @@
 
 /* Macros */
 #define MEM_SIZE            0xFFFF
-#define MEM_PROG_BEGIN      0x8000
+#define MEM_PROG_BEGIN      0x0600
 #define STACK_OFFSET_VAL    0x0100
 #define STACK_BEGIN         0xFF 
 #define IRQ_ADDR            0xFFFE
