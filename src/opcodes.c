@@ -50,8 +50,21 @@ int ROL(struct cpu* CPU, admod add_mode);
 int ROR(struct cpu* CPU, admod add_mode);
 int RTI(struct cpu* CPU);
 int RTS(struct cpu* CPU);
+int SBC(struct cpu* CPU, admod add_mode);
+int SEC();
+int SED();
+int SEI();
+int STA(struct cpu* CPU, admod add_mode);
+int STX(struct cpu* CPU, admod add_mode);
+int STY(struct cpu* CPU, admod add_mode);
+int TAX(struct cpu* CPU);
+int TAY(struct cpu* CPU);
+int TSX(struct cpu* CPU);
+int TXA(struct cpu* CPU);
+int TXS(struct cpu* CPU);
+int TYA(struct cpu* CPU);
 
-
+/* Change zero and negative flags depending on val */
 static inline void zero_and_negative_flag(uint8_t val) {
     if(val == 0) {
         set_process_status_reg(ZERO_FLAG);
@@ -310,6 +323,66 @@ int run(uint8_t opcode, struct cpu* CPU) {
             return RTI(CPU);
         case 0x60:
             return RTS(CPU);
+        case 0xE9:
+            return SBC(CPU, Immediate);
+        case 0xE5:
+            return SBC(CPU, ZeroPage);
+        case 0xF5:
+            return SBC(CPU, ZeroPageX);
+        case 0xED:
+            return SBC(CPU, Absolute);
+        case 0xFD:
+            return SBC(CPU, AbsoluteX);
+        case 0xF9:
+            return SBC(CPU, AbsoluteY);
+        case 0xE1:
+            return SBC(CPU, IndirectX);
+        case 0xF1:
+            return SBC(CPU, IndirectY);
+        case 0x38:
+            return SEC();
+        case 0xF8:
+            return SED();
+        case 0x78:
+            return SEI();
+        case 0x85:
+            return STA(CPU, ZeroPage);
+        case 0x95:
+            return STA(CPU, ZeroPageX);
+        case 0x8D:
+            return STA(CPU, Absolute);
+        case 0x9D:
+            return STA(CPU, AbsoluteX);
+        case 0x99:
+            return STA(CPU, AbsoluteY);
+        case 0x81:
+            return STA(CPU, IndirectX);
+        case 0x91:
+            return STA(CPU, IndirectY);
+        case 0x86:
+            return STX(CPU, ZeroPage);
+        case 0x96:
+            return STX(CPU, ZeroPageY);
+        case 0x8E:
+            return STX(CPU, Absolute);
+        case 0x84:
+            return STY(CPU, ZeroPage);
+        case 0x94:
+            return STY(CPU, ZeroPageX);
+        case 0x8C:
+            return STY(CPU, Absolute);
+        case 0xAA:
+            return TAX(CPU);
+        case 0xA8:
+            return TAY(CPU);
+        case 0xBA:
+            return TSX(CPU);
+        case 0x8A:
+            return TXA(CPU);
+        case 0x9A:
+            return TXS(CPU);
+        case 0x98:
+            return TYA(CPU);
     };
 
     return ILLEGAL_INSTRUCTION;
@@ -1096,5 +1169,125 @@ int RTI(struct cpu* CPU) {
 int RTS(struct cpu* CPU) {
 
     CPU->PC = pull_u16();
+    return EXECUTION;
+}
+
+/* Subtract memory from accumulator with borrow */
+int SBC(struct cpu* CPU, admod add_mode) {
+    /*
+    * Manage the following flags:
+    *   Zero Flag
+    *   Negative Flag 
+    *   Carry Flag
+    *   Overflow Flag 
+    */  
+
+    uint8_t operand = CPU->memory[operand_address_resolve(add_mode)];
+    uint8_t C_bar = process_status_val(CARRY_FLAG) ? 0 : 1;
+    uint8_t A_old = CPU->A;
+
+    CPU->A = CPU->A - operand - C_bar;
+
+    zero_and_negative_flag(CPU->A);
+
+    if((CPU->A > A_old)) {
+        set_process_status_reg(CARRY_FLAG); // CARRY FLAG
+        set_process_status_reg(OVERFLOW_FLAG); // OVERFLOW FLAG
+    } else {
+        reset_process_status_reg(CARRY_FLAG); // CARRY FLAG
+        reset_process_status_reg(OVERFLOW_FLAG); // OVERFLOW FLAG
+    }
+
+    return EXECUTION;
+}
+
+/* Set carry flag */
+int SEC() {
+
+    set_process_status_reg(CARRY_FLAG);
+    return EXECUTION;
+}
+
+/* Set decimal flag */
+int SED() {
+
+    set_process_status_reg(DECIMAL_MODE_FLAG);
+    return EXECUTION;
+}
+
+/* set interrrupt disabled flag */
+int SEI() {
+
+    set_process_status_reg(INTERRUPT_DISABLED_FLAG);
+    return EXECUTION;
+}
+
+/* store accumulator in memory */
+int STA(struct cpu* CPU, admod add_mode) {
+
+    CPU->memory[operand_address_resolve(add_mode)] = CPU->A;
+    return EXECUTION;
+}
+
+/* Store reg X ib memory */
+int STX(struct cpu* CPU, admod add_mode) {
+
+    CPU->memory[operand_address_resolve(add_mode)] = CPU->X;
+    return EXECUTION;
+}
+
+
+/* Store reg Y ib memory */
+int STY(struct cpu* CPU, admod add_mode) {
+
+    CPU->memory[operand_address_resolve(add_mode)] = CPU->Y;
+    return EXECUTION;
+}
+
+/* Transfer Accumulator to X reg */
+int TAX(struct cpu* CPU) {
+
+    CPU->X = CPU->A;
+    zero_and_negative_flag(CPU->X); 
+    return EXECUTION;
+}
+
+/* Transfer Accumulator to Y reg */
+int TAY(struct cpu* CPU) {
+
+    CPU->Y = CPU->A;
+    zero_and_negative_flag(CPU->Y); 
+    return EXECUTION;
+}
+
+/* Transfer SP to X */
+int TSX(struct cpu* CPU) {
+
+    CPU->X = CPU->SP;
+    zero_and_negative_flag(CPU->X); 
+    return EXECUTION;
+}
+
+/* Transfer X reg to Accumulator */
+int TXA(struct cpu* CPU) {
+
+    CPU->A = CPU->X;
+    zero_and_negative_flag(CPU->A); 
+    return EXECUTION;
+}
+
+/* Transfer X reg to SP */
+int TXS(struct cpu* CPU) {
+
+    CPU->SP = CPU->X;
+    zero_and_negative_flag(CPU->X); 
+    return EXECUTION;
+}
+
+/* Transfer Y reg to Accumulator */
+int TYA(struct cpu* CPU) {
+
+    CPU->A = CPU->Y;
+    zero_and_negative_flag(CPU->A); 
     return EXECUTION;
 }
