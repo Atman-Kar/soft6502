@@ -71,6 +71,7 @@ void mem_write(uint16_t mem_addr, uint8_t data) {
 void push(uint8_t stack_data) {
     CPU.memory[CPU.SP] = stack_data;
     (CPU.SP)--;
+    // printf("Pushed 0x%x\n", stack_data);
 }
 
 /* Push word to stack */
@@ -81,11 +82,13 @@ void push_u16(uint16_t stack_data) {
     (CPU.SP)--;
     CPU.memory[CPU.SP] = lo;
     (CPU.SP)--;
+    // printf("Pushed 0x%x\n", (hi << 8) | lo);
 }
 
 /* pull byte from stack */
 uint8_t pull() {
     (CPU.SP)++;
+    // printf("Popped 0x%x\n", CPU.memory[CPU.SP]);
     return CPU.memory[CPU.SP];
 }
 
@@ -95,6 +98,7 @@ uint16_t pull_u16() {
     uint8_t val_lo = CPU.memory[CPU.SP];
     (CPU.SP)++;
     uint8_t val_hi = CPU.memory[CPU.SP];
+    // printf("Popped 0x%x\n", (val_hi << 8) | val_lo);
     return ((val_hi << 8) | val_lo);
 }
 
