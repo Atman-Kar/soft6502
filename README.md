@@ -114,6 +114,9 @@ $
 ```
 
 
+## Todo 
 
+* Implement debugging functionality to step through code and probe data
+* Fix broken opcodes 
 
 
