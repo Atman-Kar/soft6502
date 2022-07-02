@@ -1,8 +1,17 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include "cpu.h"
+#include "string.h"
 
-int main() {
+int main(int argc, char *argv[]) {
 
+    uint16_t break_point = -1;
+    if(argc > 1) {
+        if(strcmp(argv[1],"-break")==0){
+            break_point = (uint16_t) strtol(argv[2], NULL, 16);
+            printf("Breakpoint set at : 0x%X\n",break_point); 
+        }
+    }
     // try to run snake program 
     uint8_t program[] = {0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
                             0x02, 0xa9, 0x04, 0x85, 0x03, 0xa9, 0x11, 0x85, 0x10, 0xa9, 0x10, 0x85, 0x12, 0xa9, 0x0f,
@@ -27,9 +36,14 @@ int main() {
                             0xa2, 0x00, 0xea, 0xea, 0xca, 0xd0, 0xfb, 0x60};
     size_t program_len = sizeof(program) / sizeof(program[0]);
     load_program(program, program_len);
-    execute();
 
-    display_cpu_regs();
+    /* Initial configs for snake program */
+    CPU.memory[0x00FE] = (uint8_t) 0x02;        // random number at loc xFE
+    CPU.memory[0x00FF] = (uint8_t) 0x73;        // initial snake direction -> down
+    /*************************************/
 
+
+    // Game must end with snake hitting the wall
+    execute(break_point);
     return 0;
 }
