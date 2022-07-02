@@ -57,7 +57,7 @@ uint8_t mem_read(uint16_t mem_addr);
 uint16_t mem_read_u16(uint16_t mem_addr);
 void mem_write(uint16_t mem_addr, uint8_t data);
 void load_program(uint8_t *program, size_t len);
-void execute(void);
+void execute(uint16_t break_point);
 uint16_t operand_address_resolve(admod mode);
 void set_process_status_reg(PS_FLAG FLAG);
 void reset_process_status_reg(PS_FLAG FLAG);

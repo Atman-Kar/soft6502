@@ -69,7 +69,7 @@ void mem_write(uint16_t mem_addr, uint8_t data) {
 
 /* Push byte to stack */
 void push(uint8_t stack_data) {
-    CPU.memory[CPU.SP] = stack_data;
+    CPU.memory[CPU.SP + STACK_OFFSET_VAL] = stack_data;
     (CPU.SP)--;
     // printf("Pushed 0x%x\n", stack_data);
 }
@@ -78,9 +78,9 @@ void push(uint8_t stack_data) {
 void push_u16(uint16_t stack_data) {
     uint8_t lo = (uint8_t) (stack_data & 0x00FF);
     uint8_t hi = (uint8_t) ((stack_data & 0xFF00) >> 8);
-    CPU.memory[CPU.SP] = hi;
+    CPU.memory[CPU.SP + STACK_OFFSET_VAL] = hi;
     (CPU.SP)--;
-    CPU.memory[CPU.SP] = lo;
+    CPU.memory[CPU.SP + STACK_OFFSET_VAL] = lo;
     (CPU.SP)--;
     // printf("Pushed 0x%x\n", (hi << 8) | lo);
 }
@@ -89,15 +89,15 @@ void push_u16(uint16_t stack_data) {
 uint8_t pull() {
     (CPU.SP)++;
     // printf("Popped 0x%x\n", CPU.memory[CPU.SP]);
-    return CPU.memory[CPU.SP];
+    return CPU.memory[CPU.SP + STACK_OFFSET_VAL];
 }
 
 /* pull word from stack */
 uint16_t pull_u16() {
     (CPU.SP)++;
-    uint8_t val_lo = CPU.memory[CPU.SP];
+    uint8_t val_lo = CPU.memory[CPU.SP + STACK_OFFSET_VAL];
     (CPU.SP)++;
-    uint8_t val_hi = CPU.memory[CPU.SP];
+    uint8_t val_hi = CPU.memory[CPU.SP + STACK_OFFSET_VAL];
     // printf("Popped 0x%x\n", (val_hi << 8) | val_lo);
     return ((val_hi << 8) | val_lo);
 }
@@ -229,14 +229,17 @@ int process_status_val(PS_FLAG FLAG) {
 }
 
 /* Execute all the opcodes in the program */
-void execute(void){
+void execute(uint16_t break_point){
     PRG_FLAG FLAG;
     uint8_t opcode;
     while(1) {
         opcode = mem_read(CPU.PC);
-        display_cpu_regs();
-        (CPU.PC)++; // Increment PC        
         printf("Running Opcode : 0x%x\n", opcode);
+        display_cpu_regs();
+        if(break_point == CPU.PC) return;
+
+        (CPU.PC)++; // Increment PC
+
         /* Execute the opcode switch statements here */
         FLAG = run(opcode, &CPU);
         switch (FLAG) {

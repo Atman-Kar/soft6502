@@ -439,6 +439,7 @@ int BRK(struct cpu* CPU) {
 
     }
     return EXECUTION;
+    // return EXIT_PROG;  
 }
 
 /* Load X register */
@@ -548,7 +549,7 @@ int ASL(struct cpu* CPU, admod add_mode) {
 int BCC(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand 
     if (!process_status_val(CARRY_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -560,7 +561,7 @@ int BCC(struct cpu* CPU){
 int BCS(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand 
     if (process_status_val(CARRY_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -573,7 +574,7 @@ int BEQ(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     // (CPU->PC)++;
     if (process_status_val(ZERO_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -614,7 +615,7 @@ int BIT(struct cpu* CPU, admod add_mode){
 int BMI(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (process_status_val(NEGATIVE_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -626,7 +627,7 @@ int BMI(struct cpu* CPU){
 int BNE(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (!process_status_val(ZERO_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -638,7 +639,7 @@ int BNE(struct cpu* CPU){
 int BPL(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (!process_status_val(NEGATIVE_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -650,7 +651,7 @@ int BPL(struct cpu* CPU){
 int BVC(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (!process_status_val(OVERFLOW_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
@@ -662,7 +663,7 @@ int BVC(struct cpu* CPU){
 int BVS(struct cpu* CPU){
     uint8_t operand = CPU->memory[CPU->PC]; // Retrieve the operand  
     if (process_status_val(OVERFLOW_FLAG)) {
-        CPU->PC = CPU->PC + (int8_t) operand + 2;        // Jump by offset 
+        CPU->PC = CPU->PC + (int8_t) operand + 1;        // Jump by offset 
     } else {
         (CPU->PC)++;
     }
